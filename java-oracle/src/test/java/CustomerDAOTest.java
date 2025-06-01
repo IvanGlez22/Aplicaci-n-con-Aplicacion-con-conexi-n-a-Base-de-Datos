@@ -1,0 +1,57 @@
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+import java.sql.Connection;
+import java.util.List;
+
+
+class CustomerDAOTest {
+    private static Connection conn;
+    private static CustomerDAO customerDAO;
+
+    @BeforeAll
+    static void setUp() throws Exception {
+        conn = DatabaseConnection.getConnection();
+        customerDAO = new CustomerDAOImpl(conn);
+    }
+
+    @AfterAll
+    static void tearDown() throws Exception {
+        if (conn != null && !conn.isClosed()) {
+            conn.close();
+        }
+    }
+    @Test
+    void testCRUDOperations() throws Exception {
+        long testId = 9991L;
+        Customer customer = new Customer(testId, "example@email.com", "Juan Pérez");
+        // Cr
+        customerDAO.add(customer);
+
+        // Rd
+        Customer retrieved = customerDAO.getById(testId);
+        assertNotNull(retrieved);
+        assertEquals("Pedro Gallardo", retrieved.fullName());
+
+        // Upd
+        Customer updated = new Customer(testId, "nuevo@email.com", "Juan P.");
+        customerDAO.update(updated);
+        Customer retrievedUpdated = customerDAO.getById(testId);
+        assertEquals("Pedro G.", retrievedUpdated.fullName());
+        assertEquals("pedrog@email.com", retrievedUpdated.emailAddress());
+
+        // Leer todos
+        List<Customer> allCustomers = customerDAO.getAll();
+        assertTrue(allCustomers.stream().anyMatch(c -> c.customerId() == testId));
+
+        // Eliminar
+        customerDAO.delete(testId);
+        assertNull(customerDAO.getById(testId));
+    }
+}
+
+
+
+
+
+
+
